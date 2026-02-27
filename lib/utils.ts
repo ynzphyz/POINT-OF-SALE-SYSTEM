@@ -73,3 +73,80 @@ export function getAvatarColor(name: string): string {
   const index = name.charCodeAt(0) % colors.length;
   return colors[index];
 }
+
+export function formatQuantity(quantity: number): string {
+  if (quantity % 1 === 0) {
+    // Whole number
+    return quantity.toString();
+  }
+  
+  const whole = Math.floor(quantity);
+  const decimal = quantity - whole;
+  
+  if (decimal === 0.5) {
+    return whole === 0 ? "½" : `${whole}½`;
+  }
+  
+  return quantity.toString();
+}
+
+// Auto-generate menu code utilities
+export function getCategoryPrefix(category: string): string {
+  const categoryMap: Record<string, string> = {
+    "Starters": "STR",
+    "Breakfast": "BRK",
+    "Lunch": "LCH",
+    "Supper": "SUP",
+    "Desserts": "DST",
+    "Beverages": "BVR",
+    "Makanan": "MKN",
+    "Minuman": "MNM",
+    "Tambahan": "TMB",
+  };
+
+  // Check if category exists in map
+  if (categoryMap[category]) {
+    return categoryMap[category];
+  }
+
+  // For any other category, take first 3 letters uppercase
+  return category.substring(0, 3).toUpperCase();
+}
+
+export function generateMenuCode(category: string, existingItems: any[]): string {
+  if (!category) {
+    return "";
+  }
+
+  const prefix = getCategoryPrefix(category);
+  
+  // Filter items by category
+  const categoryItems = existingItems.filter(item => item.category === category);
+  
+  // Find highest sequence number
+  let maxSequence = 0;
+  categoryItems.forEach(item => {
+    if (item.code && item.code.startsWith(prefix)) {
+      const sequencePart = item.code.split('-')[1];
+      if (sequencePart) {
+        const sequence = parseInt(sequencePart, 10);
+        if (!isNaN(sequence) && sequence > maxSequence) {
+          maxSequence = sequence;
+        }
+      }
+    }
+  });
+
+  // Increment and format
+  const nextSequence = maxSequence + 1;
+  
+  // Check if reaching limit
+  if (nextSequence > 999) {
+    throw new Error(`Kode menu untuk kategori ${category} sudah penuh (max 999)`);
+  }
+
+  // Format with zero padding
+  const sequenceStr = nextSequence.toString().padStart(3, '0');
+  
+  return `${prefix}-${sequenceStr}`;
+}

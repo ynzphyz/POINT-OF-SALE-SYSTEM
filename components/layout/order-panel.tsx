@@ -5,6 +5,7 @@ import { Plus, Minus, X, Grid3x3, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
+import { formatQuantity } from "@/lib/utils";
 import { OrderItem } from "@/lib/types";
 
 interface OrderPanelProps {
@@ -33,7 +34,7 @@ export function OrderPanel({
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity - item.discount,
+    (sum, item) => Math.round(sum + item.price * item.quantity - item.discount),
     0
   );
   const tax = Math.round(subtotal * 0.11);
@@ -95,6 +96,11 @@ export function OrderPanel({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <h4 className="font-semibold text-sm">{item.name}</h4>
+                          {item.quantity % 1 !== 0 && (
+                            <p className="text-xs text-primary font-medium mt-0.5">
+                              (½ porsi)
+                            </p>
+                          )}
                           {item.notes && (
                             <p className="text-xs text-gray-500 italic mt-0.5">
                               Note: {item.notes}
@@ -115,11 +121,11 @@ export function OrderPanel({
                           </span>
                           <span className="text-gray-400 text-xs">×</span>
                           <span className="text-gray-700 font-semibold text-sm">
-                            {item.quantity}
+                            {formatQuantity(item.quantity)}
                           </span>
                         </div>
                         <span className="text-gray-900 font-bold text-sm">
-                          {formatCurrency(item.price * item.quantity - item.discount)}
+                          {formatCurrency(Math.round(item.price * item.quantity - item.discount))}
                         </span>
                       </div>
                     </div>
