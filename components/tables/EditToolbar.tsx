@@ -1,6 +1,6 @@
 "use client";
 
-import { Circle, Square, RectangleHorizontal, Store, Minus, Tag, Leaf, Grid3x3, DoorOpen } from "lucide-react";
+import { Circle, Square, RectangleHorizontal, Store, Minus, Tag, Leaf, Grid3x3, DoorOpen, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EditToolbarProps {
@@ -8,11 +8,26 @@ interface EditToolbarProps {
   onAddElement: (type: "cashier" | "wall" | "plant" | "label" | "door") => void;
   snapToGrid?: boolean;
   onToggleSnap?: () => void;
+  onOpenSettings?: () => void;
 }
 
-export function EditToolbar({ onAddTable, onAddElement, snapToGrid = false, onToggleSnap }: EditToolbarProps) {
+export function EditToolbar({ onAddTable, onAddElement, snapToGrid = false, onToggleSnap, onOpenSettings }: EditToolbarProps) {
   return (
     <div className="fixed right-6 top-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl border border-gray-200 p-3 space-y-2 z-40">
+      {/* Settings Button */}
+      {onOpenSettings && (
+        <>
+          <button
+            onClick={onOpenSettings}
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 hover:border-primary hover:text-primary transition-colors"
+            title="Pengaturan"
+          >
+            <Settings className="w-6 h-6" />
+          </button>
+          <div className="border-t border-gray-200 my-2" />
+        </>
+      )}
+
       {/* Snap to Grid Toggle */}
       {onToggleSnap && (
         <>

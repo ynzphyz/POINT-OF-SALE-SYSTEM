@@ -9,6 +9,8 @@ import { FloorCanvas } from "@/components/tables/FloorCanvas";
 import { TableDetailsModal } from "@/components/tables/TableDetailsModal";
 import { EditToolbar } from "@/components/tables/EditToolbar";
 import { EditPanel } from "@/components/tables/EditPanel";
+import { EditElementPanel } from "@/components/tables/EditElementPanel";
+import { FloorSettingsModal, FloorSettings } from "@/components/tables/FloorSettingsModal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { saveFloorPlan, loadFloorPlan } from "@/lib/floor-storage";
@@ -30,8 +32,15 @@ export default function TablesPage() {
   const [selectedElement, setSelectedElement] = useState<FloorElement | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [floorSettings, setFloorSettings] = useState<FloorSettings>({
+    floorColor: "#EFF6FF",
+    boxColor: "#E5E7EB",
+    boxSize: "medium",
+    background: "none",
+  });
 
   // History management for undo/redo
   const {
@@ -215,6 +224,14 @@ export default function TablesPage() {
     showToastMessage(`Meja ${updatedTable.name} diperbarui`);
   };
 
+  const handleUpdateElement = (updatedElement: FloorElement) => {
+    setFloorPlanState({
+      ...floorPlanState,
+      elements: elements.map((el) => (el.id === updatedElement.id ? updatedElement : el)),
+    });
+    showToastMessage(`Elemen diperbarui`);
+  };
+
   const handleDeleteTable = () => {
     if (selectedTableForEdit) {
       setFloorPlanState({
@@ -223,6 +240,17 @@ export default function TablesPage() {
       });
       showToastMessage(`Meja ${selectedTableForEdit.name} dihapus`);
       setSelectedTableForEdit(null);
+    }
+  };
+
+  const handleDeleteElement = () => {
+    if (selectedElement) {
+      setFloorPlanState({
+        ...floorPlanState,
+        elements: elements.filter((el) => el.id !== selectedElement.id),
+      });
+      showToastMessage(`Elemen dihapus`);
+      setSelectedElement(null);
     }
   };
 
@@ -512,6 +540,7 @@ export default function TablesPage() {
           onAddElement={handleAddElement}
           snapToGrid={snapToGrid}
           onToggleSnap={() => setSnapToGrid(!snapToGrid)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
       )}
 
@@ -525,6 +554,27 @@ export default function TablesPage() {
           sections={sections}
         />
       )}
+
+      {/* Edit Element Panel (for selected element) */}
+      {isEditMode && selectedElement && !selectedTableForEdit && (
+        <EditElementPanel
+          element={selectedElement}
+          onUpdate={handleUpdateElement}
+          onDelete={handleDeleteElement}
+          onClose={() => setSelectedElement(null)}
+        />
+      )}
+
+      {/* Floor Settings Modal */}
+      <FloorSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={(newSettings) => {
+          setFloorSettings(newSettings);
+          showToastMessage("Pengaturan disimpan");
+        }}
+        currentSettings={floorSettings}
+      />
 
       {/* Table Details Modal (View Mode) */}
       {!isEditMode && selectedTable && (
