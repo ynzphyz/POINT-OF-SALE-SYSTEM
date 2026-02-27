@@ -3,7 +3,7 @@
 import { Table, FloorElement } from "@/lib/types";
 import { TableElement } from "./TableElement";
 import { FloorElementComponent } from "./FloorElementComponent";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 interface FloorCanvasProps {
   tables: Table[];
@@ -64,7 +64,7 @@ export function FloorCanvas({
   const [isPinching, setIsPinching] = useState(false);
   const [pinchStart, setPinchStart] = useState({ distance: 0, zoom: 1 });
 
-  // Snap to grid helper
+  // Snap to grid helper - always snap when enabled
   const snapValue = (value: number, gridSize: number = 20) => {
     if (!snapToGrid) return value;
     return Math.round(value / gridSize) * gridSize;
@@ -72,12 +72,13 @@ export function FloorCanvas({
 
   // Snap rotation to 45 degree increments
   const snapRotation = (rotation: number) => {
+    if (!snapToGrid) return rotation;
     const snapAngles = [0, 45, 90, 135, 180, 225, 270, 315];
     const normalized = ((rotation % 360) + 360) % 360;
     const closest = snapAngles.reduce((prev, curr) =>
       Math.abs(curr - normalized) < Math.abs(prev - normalized) ? curr : prev
     );
-    return Math.abs(closest - normalized) < 10 ? closest : normalized;
+    return Math.abs(closest - normalized) < 15 ? closest : normalized;
   };
 
   // Calculate distance between two touch points
@@ -92,25 +93,58 @@ export function FloorCanvas({
     const tableElement = target.closest("[data-table-id]");
     const elementElement = target.closest("[data-element-id]");
 
-    // Don't start drag if clicking on a handle
-    if (target.closest(".cursor-nw-resize, .cursor-ne-resize, .cursor-sw-resize, .cursor-se-resize, .cursor-n-resize, .cursor-s-resize, .cursor-w-resize, .cursor-e-resize, .cursor-grab")) {
+    // Check if clicking on resize/rotate handles
+    const isHandle = target.classList.contains("resize-handle") || 
+                     target.classList.contains("rotate-handle") ||
+                     target.closest(".resize-handle") ||
+                     target.closest(".rotate-handle");
+
+    if (isHandle) {
       return;
     }
 
-    if (isEditMode && tableElement) {
+    // Handle table click in view mode (not edit mode)
+    if (!isEditMode && tableElement) {
       const tableId = tableElement.getAttribute("data-table-id");
       if (tableId) {
-        setDraggingTable(tableId);
-        setDragStart({ x: e.clientX, y: e.clientY });
+        const table = tables.find(t => t.id === tableId);
+        if (table) {
+          onTableClick(table);
+        }
         return;
       }
     }
 
+    // Handle table dragging in edit mode
+    if (isEditMode && tableElement) {
+      const tableId = tableElement.getAttribute("data-table-id");
+      if (tableId) {
+        e.preventDefault();
+        setDraggingTable(tableId);
+        setDragStart({ x: e.clientX, y: e.clientY });
+        
+        // Select the table
+        const table = tables.find(t => t.id === tableId);
+        if (table) {
+          onTableClick(table);
+        }
+        return;
+      }
+    }
+
+    // Handle element dragging in edit mode
     if (isEditMode && elementElement) {
       const elementId = elementElement.getAttribute("data-element-id");
       if (elementId) {
+        e.preventDefault();
         setDraggingElement(elementId);
         setDragStart({ x: e.clientX, y: e.clientY });
+        
+        // Select the element
+        const element = elements.find(el => el.id === elementId);
+        if (element && onElementClick) {
+          onElementClick(element);
+        }
         return;
       }
     }
@@ -125,7 +159,7 @@ export function FloorCanvas({
     }
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
     // Handle table dragging
     if (draggingTable && isEditMode && onTableMove && canvasRef.current) {
       const deltaX = (e.clientX - dragStart.x) / zoom;
@@ -140,16 +174,7 @@ export function FloorCanvas({
         let newX = table.position.x + deltaXPercent;
         let newY = table.position.y + deltaYPercent;
 
-        // Snap to grid if enabled
-        if (snapToGrid) {
-          const xPx = (newX / 100) * canvasRect.width;
-          const yPx = (newY / 100) * canvasRect.height;
-          const snappedX = snapValue(xPx);
-          const snappedY = snapValue(yPx);
-          newX = (snappedX / canvasRect.width) * 100;
-          newY = (snappedY / canvasRect.height) * 100;
-        }
-
+        // Don't snap during drag, only clamp to bounds
         newX = Math.max(0, Math.min(100, newX));
         newY = Math.max(0, Math.min(100, newY));
 
@@ -173,15 +198,7 @@ export function FloorCanvas({
         let newX = element.position.x + deltaXPercent;
         let newY = element.position.y + deltaYPercent;
 
-        if (snapToGrid) {
-          const xPx = (newX / 100) * canvasRect.width;
-          const yPx = (newY / 100) * canvasRect.height;
-          const snappedX = snapValue(xPx);
-          const snappedY = snapValue(yPx);
-          newX = (snappedX / canvasRect.width) * 100;
-          newY = (snappedY / canvasRect.height) * 100;
-        }
-
+        // Don't snap during drag, only clamp to bounds
         newX = Math.max(0, Math.min(100, newX));
         newY = Math.max(0, Math.min(100, newY));
 
@@ -283,9 +300,42 @@ export function FloorCanvas({
         y: e.clientY - startPan.y,
       });
     }
-  };
+  }, [draggingTable, draggingElement, resizingTable, resizingElement, rotatingTable, rotatingElement, isPanning, isEditMode, onTableMove, onElementMove, onTableResize, onElementResize, onTableRotate, onElementRotate, zoom, dragStart, resizeStart, rotateStart, startPan, tables, elements, snapToGrid, snapValue, snapRotation]);
 
   const handlePointerUp = () => {
+    // Snap to grid when drag ends
+    if (snapToGrid && canvasRef.current) {
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      
+      // Snap table position
+      if (draggingTable && onTableMove) {
+        const table = tables.find((t) => t.id === draggingTable);
+        if (table) {
+          const xPx = (table.position.x / 100) * canvasRect.width;
+          const yPx = (table.position.y / 100) * canvasRect.height;
+          const snappedX = snapValue(xPx);
+          const snappedY = snapValue(yPx);
+          const newX = (snappedX / canvasRect.width) * 100;
+          const newY = (snappedY / canvasRect.height) * 100;
+          onTableMove(draggingTable, { x: newX, y: newY });
+        }
+      }
+      
+      // Snap element position
+      if (draggingElement && onElementMove) {
+        const element = elements.find((el) => el.id === draggingElement);
+        if (element) {
+          const xPx = (element.position.x / 100) * canvasRect.width;
+          const yPx = (element.position.y / 100) * canvasRect.height;
+          const snappedX = snapValue(xPx);
+          const snappedY = snapValue(yPx);
+          const newX = (snappedX / canvasRect.width) * 100;
+          const newY = (snappedY / canvasRect.height) * 100;
+          onElementMove(draggingElement, { x: newX, y: newY });
+        }
+      }
+    }
+    
     setIsPanning(false);
     setDraggingTable(null);
     setDraggingElement(null);
@@ -368,7 +418,7 @@ export function FloorCanvas({
   return (
     <div
       ref={canvasRef}
-      className="relative w-full h-full overflow-hidden"
+      className="relative w-full h-full overflow-hidden select-none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -376,9 +426,15 @@ export function FloorCanvas({
       style={{
         cursor: isPanning ? "grabbing" : isEditMode ? "default" : "grab",
         backgroundColor: isEditMode ? "#EFF6FF" : "#FFFFFF",
-        backgroundImage: `radial-gradient(circle, ${snapToGrid ? "#9CA3AF" : "#E5E7EB"} 1px, transparent 1px)`,
+        backgroundImage: snapToGrid 
+          ? `radial-gradient(circle, #9CA3AF 1.5px, transparent 1.5px)` 
+          : `radial-gradient(circle, #E5E7EB 1px, transparent 1px)`,
         backgroundSize: "20px 20px",
         touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
       }}
     >
       {/* Canvas content with zoom and pan */}
@@ -389,6 +445,7 @@ export function FloorCanvas({
           transformOrigin: "0 0",
           width: "100%",
           height: "100%",
+          willChange: isPanning || draggingTable || draggingElement ? "transform" : "auto",
         }}
       >
         {/* Floor Elements */}
@@ -398,6 +455,7 @@ export function FloorCanvas({
               element={element}
               onClick={() => onElementClick && onElementClick(element)}
               isEditMode={isEditMode}
+              isDragging={draggingElement === element.id}
               isSelected={selectedElementId === element.id}
               onResizeStart={(e, handle) => handleElementResizeStart(element.id, e, handle)}
               onRotateStart={(e) => handleElementRotateStart(element.id, e)}

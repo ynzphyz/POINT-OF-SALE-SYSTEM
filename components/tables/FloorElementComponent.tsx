@@ -7,6 +7,7 @@ interface FloorElementComponentProps {
   element: FloorElement;
   onClick: () => void;
   isEditMode?: boolean;
+  isDragging?: boolean;
   isSelected?: boolean;
   onResizeStart?: (e: React.PointerEvent, handle: string) => void;
   onRotateStart?: (e: React.PointerEvent) => void;
@@ -16,15 +17,11 @@ export function FloorElementComponent({
   element,
   onClick,
   isEditMode = false,
+  isDragging = false,
   isSelected = false,
   onResizeStart,
   onRotateStart,
 }: FloorElementComponentProps) {
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    onClick();
-  };
-
   const handleResizePointerDown = (e: React.PointerEvent, handle: string) => {
     e.stopPropagation();
     if (onResizeStart) {
@@ -41,11 +38,12 @@ export function FloorElementComponent({
 
   return (
     <div
-      onPointerDown={handlePointerDown}
       className={cn(
-        "absolute",
+        "absolute select-none",
         isEditMode && "cursor-move",
-        isSelected && "ring-2 ring-blue-500"
+        isDragging && "opacity-70",
+        isSelected && "ring-2 ring-blue-500",
+        !isDragging && "transition-all duration-200"
       )}
       style={{
         left: `${element.position.x}%`,
@@ -53,6 +51,12 @@ export function FloorElementComponent({
         width: `${element.size.width}px`,
         height: `${element.size.height}px`,
         transform: `rotate(${element.rotation}deg)`,
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
+        willChange: isDragging ? "transform" : "auto",
       }}
     >
       {/* Element Content */}
@@ -86,7 +90,7 @@ export function FloorElementComponent({
           {/* Rotation Handle */}
           <div
             onPointerDown={handleRotatePointerDown}
-            className="absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full cursor-grab hover:bg-blue-600 flex items-center justify-center shadow-lg"
+            className="rotate-handle absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full cursor-grab hover:bg-blue-600 flex items-center justify-center shadow-lg z-10"
             style={{ touchAction: "none" }}
           >
             <div className="w-1 h-4 bg-blue-500 absolute bottom-6" />
@@ -96,44 +100,44 @@ export function FloorElementComponent({
           {/* Corner Resize Handles */}
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "nw")}
-            className="absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-nw-resize"
+            className="resize-handle absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-nw-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "ne")}
-            className="absolute -top-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-ne-resize"
+            className="resize-handle absolute -top-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-ne-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "sw")}
-            className="absolute -bottom-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-sw-resize"
+            className="resize-handle absolute -bottom-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-sw-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "se")}
-            className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-se-resize"
+            className="resize-handle absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-se-resize z-10"
             style={{ touchAction: "none" }}
           />
 
           {/* Side Resize Handles */}
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "n")}
-            className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-n-resize"
+            className="resize-handle absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-n-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "s")}
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-s-resize"
+            className="resize-handle absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-s-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "w")}
-            className="absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-w-resize"
+            className="resize-handle absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-w-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "e")}
-            className="absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-e-resize"
+            className="resize-handle absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-e-resize z-10"
             style={{ touchAction: "none" }}
           />
         </>

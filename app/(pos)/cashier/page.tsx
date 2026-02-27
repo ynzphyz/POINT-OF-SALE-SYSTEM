@@ -12,7 +12,7 @@ import { MenuCategory, OrderItem, MenuItem } from "@/lib/types";
 import { formatCurrency, generateOrderNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-export default function HomePage() {
+export default function CashierPage() {
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -294,4 +294,3 @@ export default function HomePage() {
     </div>
   );
 }
-

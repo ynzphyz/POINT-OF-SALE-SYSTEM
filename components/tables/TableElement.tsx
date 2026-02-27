@@ -45,11 +45,6 @@ export function TableElement({
     return `${hours}h ${minutes % 60}m`;
   };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    onClick();
-  };
-
   const handleResizePointerDown = (e: React.PointerEvent, handle: string) => {
     e.stopPropagation();
     if (onResizeStart) {
@@ -66,14 +61,14 @@ export function TableElement({
 
   return (
     <div
-      onPointerDown={handlePointerDown}
       className={cn(
-        "absolute cursor-pointer transition-all duration-200 border-2 shadow-md flex flex-col items-center justify-center p-2",
+        "absolute cursor-pointer border-2 shadow-md flex flex-col items-center justify-center p-2 select-none overflow-hidden",
         table.shape === "circle" ? "rounded-full" : "rounded-xl",
         getStatusColors(),
         isEditMode && "cursor-move hover:scale-105",
         isDragging && "border-blue-500 border-4 shadow-2xl",
-        isSelected && "ring-2 ring-blue-500"
+        isSelected && "ring-2 ring-blue-500",
+        !isDragging && "transition-all duration-200"
       )}
       style={{
         left: `${table.position.x}%`,
@@ -82,34 +77,39 @@ export function TableElement({
         height: `${table.size.height}px`,
         transform: `rotate(${table.rotation}deg)`,
         touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
+        willChange: isDragging ? "transform" : "auto",
       }}
     >
       {/* Table Name */}
-      <div className="text-lg font-bold text-gray-800">{table.name}</div>
+      <div className="text-base font-bold text-gray-800 truncate max-w-full px-1 mb-0.5">{table.name}</div>
 
       {/* Capacity */}
-      <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
-        <Users className="w-3 h-3" />
+      <div className="flex items-center gap-1 text-xs text-gray-600 mb-0.5">
+        <Users className="w-3 h-3 flex-shrink-0" />
         <span>{table.capacity}</span>
       </div>
 
       {/* Occupied Info */}
       {table.status === "occupied" && table.customerName && table.seatedAt && (
-        <div className="mt-1 text-center">
-          <div className="text-xs font-medium text-gray-700 truncate max-w-full px-1">
+        <div className="text-center w-full px-1 space-y-0.5">
+          <div className="text-xs font-medium text-gray-700 truncate">
             {table.customerName}
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-500 justify-center">
-            <Clock className="w-3 h-3" />
-            <span>{getTimeSince(table.seatedAt)}</span>
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            <span className="whitespace-nowrap">{getTimeSince(table.seatedAt)}</span>
           </div>
         </div>
       )}
 
       {/* Reserved Info */}
       {table.status === "reserved" && table.customerName && (
-        <div className="mt-1 text-center">
-          <div className="text-xs font-medium text-gray-700 truncate max-w-full px-1">
+        <div className="text-center w-full px-1 space-y-0.5">
+          <div className="text-xs font-medium text-gray-700 truncate">
             {table.customerName}
           </div>
           <div className="text-xs text-gray-500">Reserved</div>
@@ -122,7 +122,7 @@ export function TableElement({
           {/* Rotation Handle */}
           <div
             onPointerDown={handleRotatePointerDown}
-            className="absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full cursor-grab hover:bg-blue-600 flex items-center justify-center shadow-lg z-10"
+            className="rotate-handle absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full cursor-grab hover:bg-blue-600 flex items-center justify-center shadow-lg z-10"
             style={{ touchAction: "none" }}
           >
             <div className="w-1 h-4 bg-blue-500 absolute bottom-6" />
@@ -132,44 +132,44 @@ export function TableElement({
           {/* Corner Resize Handles */}
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "nw")}
-            className="absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-nw-resize z-10"
+            className="resize-handle absolute -top-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-nw-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "ne")}
-            className="absolute -top-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-ne-resize z-10"
+            className="resize-handle absolute -top-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-ne-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "sw")}
-            className="absolute -bottom-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-sw-resize z-10"
+            className="resize-handle absolute -bottom-1 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-sw-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "se")}
-            className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-se-resize z-10"
+            className="resize-handle absolute -bottom-1 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-se-resize z-10"
             style={{ touchAction: "none" }}
           />
 
           {/* Side Resize Handles */}
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "n")}
-            className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-n-resize z-10"
+            className="resize-handle absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-n-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "s")}
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-s-resize z-10"
+            className="resize-handle absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-s-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "w")}
-            className="absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-w-resize z-10"
+            className="resize-handle absolute top-1/2 -translate-y-1/2 -left-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-w-resize z-10"
             style={{ touchAction: "none" }}
           />
           <div
             onPointerDown={(e) => handleResizePointerDown(e, "e")}
-            className="absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-e-resize z-10"
+            className="resize-handle absolute top-1/2 -translate-y-1/2 -right-1 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-e-resize z-10"
             style={{ touchAction: "none" }}
           />
         </>
