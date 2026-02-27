@@ -78,15 +78,49 @@ export type MenuCategory =
   | "Desserts" 
   | "Beverages";
 
-export type TableStatus = "available" | "occupied" | "reserved";
+export type TableStatus = "available" | "occupied" | "reserved" | "cleaning";
+export type TableShape = "rectangle" | "circle" | "square";
 
 export interface Table {
   id: string;
-  number: string;
+  name: string; // e.g. "A1", "VIP-1"
+  number: string; // for backward compatibility
   capacity: number;
-  section: string;
+  shape: TableShape;
   status: TableStatus;
-  currentOrderId?: string;
+  section: string;
+  floor: string;
+  position: {
+    x: number; // percentage from canvas left (0-100)
+    y: number; // percentage from canvas top (0-100)
+  };
+  size: {
+    width: number; // in pixels
+    height: number; // in pixels
+  };
+  rotation: number; // degrees 0-360
+  activeOrderId?: string;
+  reservationId?: string;
+  customerName?: string;
+  seatedAt?: Date;
+}
+
+export type FloorElementType = "wall" | "door" | "plant" | "cashier" | "label";
+
+export interface FloorElement {
+  id: string;
+  type: FloorElementType;
+  position: {
+    x: number; // percentage from canvas left (0-100)
+    y: number; // percentage from canvas top (0-100)
+  };
+  size: {
+    width: number; // in pixels
+    height: number; // in pixels
+  };
+  rotation: number; // degrees 0-360
+  label?: string;
+  floor: string;
 }
 
 export interface Customer {
