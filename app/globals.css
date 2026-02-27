@@ -27,6 +27,10 @@
   .animate-scaleIn {
     animation: scaleIn 0.2s ease-out;
   }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
 }
 
 @keyframes fadeIn {
