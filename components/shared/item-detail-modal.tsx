@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MenuItem } from "@/lib/types";
 import { formatCurrency, cn } from "@/lib/utils";
+import { formatQuantity } from "@/lib/utils";
 
 interface ItemDetailModalProps {
   item: MenuItem | null;
@@ -27,7 +28,7 @@ export function ItemDetailModal({
   // Reset form when modal opens with new item
   useEffect(() => {
     if (isOpen && item) {
-      setQuantity(1);
+      setQuantity(item.allow_half_portion ? 0.5 : 1);
       setNotes("");
       setDiscount(0);
     }
@@ -42,8 +43,10 @@ export function ItemDetailModal({
   };
 
   const handleQuantityChange = (delta: number) => {
-    const newQty = quantity + delta;
-    if (newQty >= 1) {
+    const step = item.allow_half_portion ? 0.5 : 1;
+    const minQty = item.allow_half_portion ? 0.5 : 1;
+    const newQty = quantity + delta * step;
+    if (newQty >= minQty) {
       setQuantity(newQty);
     }
   };
@@ -132,20 +135,27 @@ export function ItemDetailModal({
 
               {/* Quantity Selector */}
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Quantity
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Quantity
+                  </label>
+                  {item.allow_half_portion && (
+                    <span className="text-xs text-primary font-medium">
+                      ½ porsi tersedia
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
+                    disabled={quantity <= (item.allow_half_portion ? 0.5 : 1)}
                     className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
                   <div className="flex-1 text-center">
                     <span className="text-3xl font-bold text-gray-900">
-                      {quantity}
+                      {formatQuantity(quantity)}
                     </span>
                   </div>
                   <button
@@ -195,10 +205,10 @@ export function ItemDetailModal({
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 mb-4 border border-gray-200">
                 <div className="flex justify-between items-center text-sm mb-1">
                   <span className="text-gray-600">
-                    {formatCurrency(item.price)} × {quantity}
+                    {formatCurrency(item.price)} × {formatQuantity(quantity)}
                   </span>
                   <span className="font-semibold">
-                    {formatCurrency(item.price * quantity)}
+                    {formatCurrency(Math.round(item.price * quantity))}
                   </span>
                 </div>
                 {discount > 0 && (
@@ -213,7 +223,7 @@ export function ItemDetailModal({
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900">Subtotal</span>
                     <span className="text-xl font-bold text-primary">
-                      {formatCurrency(subtotal)}
+                      {formatCurrency(Math.round(subtotal))}
                     </span>
                   </div>
                 </div>

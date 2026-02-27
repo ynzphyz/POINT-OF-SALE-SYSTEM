@@ -66,6 +66,7 @@ export interface MenuItem {
   description?: string;
   available: boolean;
   gradient?: string;
+  allow_half_portion: boolean;
 }
 
 export type MenuCategory = 

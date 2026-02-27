@@ -11,6 +11,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Tables", href: "/tables", icon: Grid3x3 },
   { name: "Cashier", href: "/", icon: ShoppingCart },
   { name: "Orders", href: "/orders", icon: ClipboardList },
+  { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
