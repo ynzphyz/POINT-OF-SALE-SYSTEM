@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { menuItems as initialMenuItems } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
 import { MenuItem } from "@/lib/types";
 import { Search, Plus, Edit2, Trash2, X, Package, CheckCircle2, XCircle, Upload, Image as ImageIcon, Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { generateMenuCode } from "@/lib/utils";
-import { useEffect } from "react";
+import { useMenuItems } from "@/lib/useMenuItems";
 
 export default function InventoryPage() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
+  const { menuItems, isLoading, updateMenuItem, addMenuItem, deleteMenuItem } = useMenuItems();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [showModal, setShowModal] = useState(false);
@@ -161,22 +160,19 @@ export default function InventoryPage() {
 
     if (editingItem) {
       // Update existing item
-      setMenuItems(menuItems.map(item => 
-        item.id === editingItem.id 
-          ? {
-              ...item,
-              code: formData.code,
-              name: formData.name,
-              category: formData.category,
-              price: formData.price,
-              cost: formData.cost,
-              image: formData.image,
-              description: formData.description,
-              allow_half_portion: formData.allow_half_portion,
-              available: formData.available,
-            }
-          : item
-      ));
+      const updatedItem: MenuItem = {
+        ...editingItem,
+        code: formData.code,
+        name: formData.name,
+        category: formData.category,
+        price: formData.price,
+        cost: formData.cost,
+        image: formData.image,
+        description: formData.description,
+        allow_half_portion: formData.allow_half_portion,
+        available: formData.available,
+      };
+      updateMenuItem(updatedItem);
       showNotification(`Menu "${formData.name}" berhasil diupdate`);
     } else {
       // Add new item
@@ -192,7 +188,7 @@ export default function InventoryPage() {
         available: formData.available,
         allow_half_portion: formData.allow_half_portion,
       };
-      setMenuItems([...menuItems, newItem]);
+      addMenuItem(newItem);
       showNotification(`Menu "${formData.name}" berhasil ditambahkan`);
     }
     
@@ -201,14 +197,20 @@ export default function InventoryPage() {
 
   const handleDelete = (item: MenuItem) => {
     if (confirm(`Hapus menu "${item.name}"?`)) {
-      setMenuItems(menuItems.filter(i => i.id !== item.id));
+      deleteMenuItem(item.id);
       showNotification(`Menu "${item.name}" berhasil dihapus`);
     }
   };
 
   return (
     <div className="p-6">
-      {/* Header */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-gray-400">Loading menu items...</div>
+        </div>
+      ) : (
+        <>
+          {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-2">Master Menu</h1>
@@ -691,6 +693,8 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

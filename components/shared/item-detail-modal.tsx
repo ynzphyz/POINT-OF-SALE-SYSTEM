@@ -13,6 +13,12 @@ interface ItemDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToOrder: (item: MenuItem, quantity: number, notes?: string, discount?: number) => void;
+  // Edit mode props
+  editMode?: boolean;
+  initialQuantity?: number;
+  initialNotes?: string;
+  initialDiscount?: number;
+  onUpdateOrder?: (quantity: number, notes?: string, discount?: number) => void;
 }
 
 export function ItemDetailModal({
@@ -20,6 +26,11 @@ export function ItemDetailModal({
   isOpen,
   onClose,
   onAddToOrder,
+  editMode = false,
+  initialQuantity = 1,
+  initialNotes = "",
+  initialDiscount = 0,
+  onUpdateOrder,
 }: ItemDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
@@ -28,11 +39,19 @@ export function ItemDetailModal({
   // Reset form when modal opens with new item
   useEffect(() => {
     if (isOpen && item) {
-      setQuantity(item.allow_half_portion ? 0.5 : 1);
-      setNotes("");
-      setDiscount(0);
+      if (editMode) {
+        // Edit mode: pre-fill with existing values
+        setQuantity(initialQuantity);
+        setNotes(initialNotes);
+        setDiscount(initialDiscount);
+      } else {
+        // Add mode: reset to defaults
+        setQuantity(1); // Always start with 1, regardless of allow_half_portion
+        setNotes("");
+        setDiscount(0);
+      }
     }
-  }, [isOpen, item]);
+  }, [isOpen, item, editMode, initialQuantity, initialNotes, initialDiscount]);
 
   if (!isOpen || !item) return null;
 
@@ -51,8 +70,20 @@ export function ItemDetailModal({
     }
   };
 
+  const handleAddOne = () => {
+    setQuantity((prev) => prev + 1);
+  };
+
+  const handleAddHalfPortion = () => {
+    setQuantity((prev) => prev + 0.5);
+  };
+
   const handleAddToOrder = () => {
-    onAddToOrder(item, quantity, notes || undefined, discount || 0);
+    if (editMode && onUpdateOrder) {
+      onUpdateOrder(quantity, notes || undefined, discount || 0);
+    } else {
+      onAddToOrder(item, quantity, notes || undefined, discount || 0);
+    }
     onClose();
   };
 
@@ -146,6 +177,7 @@ export function ItemDetailModal({
                   )}
                 </div>
                 <div className="flex items-center gap-3">
+                  {/* Minus Button */}
                   <button
                     onClick={() => handleQuantityChange(-1)}
                     disabled={quantity <= (item.allow_half_portion ? 0.5 : 1)}
@@ -153,17 +185,32 @@ export function ItemDetailModal({
                   >
                     <Minus className="w-5 h-5" />
                   </button>
+                  
+                  {/* Quantity Display */}
                   <div className="flex-1 text-center">
                     <span className="text-3xl font-bold text-gray-900">
                       {formatQuantity(quantity)}
                     </span>
                   </div>
+                  
+                  {/* Plus Button */}
                   <button
-                    onClick={() => handleQuantityChange(1)}
+                    onClick={handleAddOne}
                     className="w-12 h-12 rounded-xl bg-primary hover:bg-primary/90 text-white flex items-center justify-center transition-colors shadow-md"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
+
+                  {/* Half Portion Button - Only show if allow_half_portion is true */}
+                  {item.allow_half_portion && (
+                    <button
+                      onClick={handleAddHalfPortion}
+                      className="w-12 h-12 rounded-xl bg-white border-2 border-primary text-primary hover:bg-orange-50 active:bg-primary active:text-white flex items-center justify-center transition-colors shadow-sm font-bold text-xl"
+                      title="Tambah ½ porsi"
+                    >
+                      ½
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -238,13 +285,13 @@ export function ItemDetailModal({
                   variant="outline"
                   className="flex-1 h-12 text-base font-semibold"
                 >
-                  Cancel
+                  Batal
                 </Button>
                 <Button
                   onClick={handleAddToOrder}
                   className="flex-1 h-12 text-base font-semibold shadow-lg"
                 >
-                  Add to Order
+                  {editMode ? "Update Item" : "Add to Order"}
                 </Button>
               </div>
             </div>
