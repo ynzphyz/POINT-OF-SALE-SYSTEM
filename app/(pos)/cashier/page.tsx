@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrderPanel } from "@/components/layout/order-panel";
 import { ItemDetailModal } from "@/components/shared/item-detail-modal";
-import { menuItems, tables } from "@/lib/mock-data";
+import { tables } from "@/lib/mock-data";
 import { CATEGORIES, RESTAURANT_NAME } from "@/lib/constants";
 import { MenuCategory, OrderItem, MenuItem } from "@/lib/types";
 import { formatCurrency, generateOrderNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useMenuItems } from "@/lib/useMenuItems";
 
 export default function CashierPage() {
+  const { menuItems, isLoading } = useMenuItems();
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -85,6 +87,14 @@ export default function CashierPage() {
     );
   };
 
+  const handleUpdateNotes = (itemId: string, notes?: string) => {
+    setOrderItems(
+      orderItems.map((item) =>
+        item.id === itemId ? { ...item, notes } : item
+      )
+    );
+  };
+
   const handleRemoveItem = (itemId: string) => {
     setOrderItems(orderItems.filter((item) => item.id !== itemId));
   };
@@ -108,6 +118,14 @@ export default function CashierPage() {
 
   const availableTables = tables.filter(t => t.status === "available");
   const selectedTableData = tables.find(t => t.id === selectedTable);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-gray-400">Loading menu...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex">
@@ -223,11 +241,13 @@ export default function CashierPage() {
         items={orderItems}
         onUpdateQuantity={handleUpdateQuantity}
         onUpdateDiscount={handleUpdateDiscount}
+        onUpdateNotes={handleUpdateNotes}
         onRemoveItem={handleRemoveItem}
         onAddCustomer={() => alert("Add customer modal")}
         onProceed={handleProceed}
         onHoldOrder={handleHoldOrder}
         customerName={customerName}
+        menuItems={menuItems}
       />
 
       {/* Item Detail Modal */}
