@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrderPanel } from "@/components/layout/order-panel";
 import { ItemDetailModal } from "@/components/shared/item-detail-modal";
-import { menuItems, tables } from "@/lib/mock-data";
+import { tables } from "@/lib/mock-data";
 import { CATEGORIES, RESTAURANT_NAME } from "@/lib/constants";
 import { MenuCategory, OrderItem, MenuItem } from "@/lib/types";
 import { formatCurrency, generateOrderNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useMenuItems } from "@/lib/useMenuItems";
 
 export default function HomePage() {
+  const { menuItems, isLoading } = useMenuItems();
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -85,6 +87,14 @@ export default function HomePage() {
     );
   };
 
+  const handleUpdateNotes = (itemId: string, notes?: string) => {
+    setOrderItems(
+      orderItems.map((item) =>
+        item.id === itemId ? { ...item, notes } : item
+      )
+    );
+  };
+
   const handleRemoveItem = (itemId: string) => {
     setOrderItems(orderItems.filter((item) => item.id !== itemId));
   };
@@ -109,10 +119,18 @@ export default function HomePage() {
   const availableTables = tables.filter(t => t.status === "available");
   const selectedTableData = tables.find(t => t.id === selectedTable);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-gray-400">Loading menu...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex">
       {/* Main Content */}
-      <div className="flex-1 mr-[350px]">
+      <div className="flex-1 mr-[480px]">
         {/* Top Bar */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -166,7 +184,7 @@ export default function HomePage() {
 
         {/* Menu Grid */}
         <div className="p-6">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {filteredItems.map((item) => (
               <button
                 key={item.id}
@@ -223,11 +241,13 @@ export default function HomePage() {
         items={orderItems}
         onUpdateQuantity={handleUpdateQuantity}
         onUpdateDiscount={handleUpdateDiscount}
+        onUpdateNotes={handleUpdateNotes}
         onRemoveItem={handleRemoveItem}
         onAddCustomer={() => alert("Add customer modal")}
         onProceed={handleProceed}
         onHoldOrder={handleHoldOrder}
         customerName={customerName}
+        menuItems={menuItems}
       />
 
       {/* Item Detail Modal */}
