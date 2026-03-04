@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, X, Grid3x3, List, Trash2, Edit2 } from "lucide-react";
+import { Plus, X, Grid3x3, List, Trash2, Edit2, Split, Merge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ItemDetailModal } from "@/components/shared/item-detail-modal";
 import { formatCurrency } from "@/lib/utils";
@@ -17,6 +17,8 @@ interface OrderPanelProps {
   onAddCustomer: () => void;
   onProceed: () => void;
   onHoldOrder: () => void;
+  onSplitBill?: () => void;
+  onMergeBill?: () => void;
   customerName?: string;
   menuItems: any[]; // For looking up menu item details
 }
@@ -177,6 +179,8 @@ export function OrderPanel({
   onAddCustomer,
   onProceed,
   onHoldOrder,
+  onSplitBill,
+  onMergeBill,
   customerName,
   menuItems,
 }: OrderPanelProps) {
@@ -367,22 +371,51 @@ export function OrderPanel({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={onHoldOrder}
-              variant="outline"
-              className="flex-1"
-              disabled={items.length === 0}
-            >
-              Hold Order
-            </Button>
-            <Button
-              onClick={onProceed}
-              className="flex-1"
-              disabled={items.length === 0}
-            >
-              Proceed
-            </Button>
+          <div className="space-y-2">
+            {/* Split Bill Button */}
+            {onSplitBill && (
+              <Button
+                onClick={onSplitBill}
+                variant="outline"
+                className="w-full h-12 font-semibold"
+                disabled={items.length === 0}
+              >
+                <Split className="w-4 h-4 mr-2" />
+                Split Bill
+              </Button>
+            )}
+
+            {/* Merge Bill Button */}
+            {onMergeBill && (
+              <Button
+                onClick={onMergeBill}
+                variant="outline"
+                className="w-full h-12 font-semibold"
+                disabled={items.length === 0}
+              >
+                <Merge className="w-4 h-4 mr-2" />
+                Merge Bill
+              </Button>
+            )}
+
+            {/* Hold Order & Proceed */}
+            <div className="flex gap-2">
+              <Button
+                onClick={onHoldOrder}
+                variant="outline"
+                className="flex-1 h-12 font-semibold"
+                disabled={items.length === 0}
+              >
+                Hold Order
+              </Button>
+              <Button
+                onClick={onProceed}
+                className="flex-1 h-12 font-semibold"
+                disabled={items.length === 0}
+              >
+                Proceed
+              </Button>
+            </div>
           </div>
         </div>
       </div>

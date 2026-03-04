@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrderPanel } from "@/components/layout/order-panel";
 import { ItemDetailModal } from "@/components/shared/item-detail-modal";
+import { SplitBillModal } from "@/components/order/SplitBillModal";
+import { SplitPaymentScreen } from "@/components/order/SplitPaymentScreen";
+import { MergeBillModal } from "@/components/order/MergeBillModal";
 import { tables } from "@/lib/mock-data";
 import { CATEGORIES, RESTAURANT_NAME } from "@/lib/constants";
-import { MenuCategory, OrderItem, MenuItem } from "@/lib/types";
+import { MenuCategory, OrderItem, MenuItem, SplitPerson } from "@/lib/types";
 import { formatCurrency, generateOrderNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useMenuItems } from "@/lib/useMenuItems";
@@ -23,6 +26,17 @@ export default function HomePage() {
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+
+  // Split Bill states
+  const [showSplitBillModal, setShowSplitBillModal] = useState(false);
+  const [showSplitPaymentScreen, setShowSplitPaymentScreen] = useState(false);
+  const [splitData, setSplitData] = useState<{
+    splits: SplitPerson[];
+    mode: "amount" | "item";
+  } | null>(null);
+
+  // Merge Bill states
+  const [showMergeBillModal, setShowMergeBillModal] = useState(false);
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory =
@@ -99,6 +113,14 @@ export default function HomePage() {
     setOrderItems(orderItems.filter((item) => item.id !== itemId));
   };
 
+  // Calculate totals
+  const subtotal = orderItems.reduce(
+    (sum, item) => Math.round(sum + item.price * item.quantity - item.discount),
+    0
+  );
+  const tax = Math.round(subtotal * 0.11);
+  const total = subtotal + tax;
+
   const handleProceed = () => {
     if (orderItems.length === 0) return;
     // Navigate to payment or create order
@@ -116,8 +138,57 @@ export default function HomePage() {
     setIsTableModalOpen(false);
   };
 
+  // Split Bill handlers
+  const handleSplitBill = () => {
+    setShowSplitBillModal(true);
+  };
+
+  const handleProceedToSplitPayment = (splits: SplitPerson[], mode: "amount" | "item") => {
+    setSplitData({ splits, mode });
+    setShowSplitBillModal(false);
+    setShowSplitPaymentScreen(true);
+  };
+
+  const handleCompleteSplitPayment = (completedSplits: SplitPerson[]) => {
+    // In real app: save order with split bill data
+    alert("Split payment completed!");
+    console.log("Completed splits:", completedSplits);
+    setShowSplitPaymentScreen(false);
+    setSplitData(null);
+    setOrderItems([]);
+  };
+
+  const handleBackToSplitBill = () => {
+    setShowSplitPaymentScreen(false);
+    setShowSplitBillModal(true);
+  };
+
+  // Merge Bill handlers
+  const handleMergeBill = () => {
+    setShowMergeBillModal(true);
+  };
+
+  const handleConfirmMerge = (targetOrderId: string) => {
+    // In real app: merge orders in backend
+    alert(`Merging with order ${targetOrderId}`);
+    setShowMergeBillModal(false);
+  };
+
   const availableTables = tables.filter(t => t.status === "available");
   const selectedTableData = tables.find(t => t.id === selectedTable);
+
+  // Mock current order for merge
+  const currentOrder = {
+    id: "current-order",
+    orderNumber: generateOrderNumber(),
+    tableName: selectedTableData?.name,
+    customerName,
+    items: orderItems,
+    total: subtotal + tax,
+  };
+
+  // Mock available orders for merge (empty for now)
+  const availableOrders: any[] = [];
 
   if (isLoading) {
     return (
@@ -246,6 +317,8 @@ export default function HomePage() {
         onAddCustomer={() => alert("Add customer modal")}
         onProceed={handleProceed}
         onHoldOrder={handleHoldOrder}
+        onSplitBill={handleSplitBill}
+        onMergeBill={handleMergeBill}
         customerName={customerName}
         menuItems={menuItems}
       />
@@ -256,6 +329,38 @@ export default function HomePage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddToOrder={handleAddFromModal}
+      />
+
+      {/* Split Bill Modal */}
+      <SplitBillModal
+        isOpen={showSplitBillModal}
+        onClose={() => setShowSplitBillModal(false)}
+        orderItems={orderItems}
+        subtotal={subtotal}
+        tax={tax}
+        total={total}
+        onProceedToPayment={handleProceedToSplitPayment}
+      />
+
+      {/* Split Payment Screen */}
+      {splitData && (
+        <SplitPaymentScreen
+          isOpen={showSplitPaymentScreen}
+          onClose={() => setShowSplitPaymentScreen(false)}
+          onBack={handleBackToSplitBill}
+          splits={splitData.splits}
+          orderNumber={currentOrder.orderNumber}
+          onComplete={handleCompleteSplitPayment}
+        />
+      )}
+
+      {/* Merge Bill Modal */}
+      <MergeBillModal
+        isOpen={showMergeBillModal}
+        onClose={() => setShowMergeBillModal(false)}
+        currentOrder={currentOrder}
+        availableOrders={availableOrders}
+        onMerge={handleConfirmMerge}
       />
 
       {/* Table Selection Modal */}

@@ -150,3 +150,76 @@ export function generateMenuCode(category: string, existingItems: any[]): string
   
   return `${prefix}-${sequenceStr}`;
 }
+
+// Split Bill Utilities
+export function generateSplitPersonId(): string {
+  return `sp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+export function formatSplitLabel(index: number): string {
+  return `Orang ${index + 1}`;
+}
+
+export function getPersonColor(index: number): string {
+  const colors = [
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-yellow-500",
+    "bg-indigo-500",
+    "bg-red-500",
+    "bg-teal-500",
+    "bg-orange-500",
+    "bg-cyan-500",
+  ];
+  return colors[index % colors.length];
+}
+
+export function getPersonTextColor(index: number): string {
+  const colors = [
+    "text-blue-600",
+    "text-green-600",
+    "text-purple-600",
+    "text-pink-600",
+    "text-yellow-600",
+    "text-indigo-600",
+    "text-red-600",
+    "text-teal-600",
+    "text-orange-600",
+    "text-cyan-600",
+  ];
+  return colors[index % colors.length];
+}
+
+export function getPersonBgColor(index: number): string {
+  const colors = [
+    "bg-blue-50",
+    "bg-green-50",
+    "bg-purple-50",
+    "bg-pink-50",
+    "bg-yellow-50",
+    "bg-indigo-50",
+    "bg-red-50",
+    "bg-teal-50",
+    "bg-orange-50",
+    "bg-cyan-50",
+  ];
+  return colors[index % colors.length];
+}
+
+export function getPersonBorderColor(index: number): string {
+  const colors = [
+    "border-blue-200",
+    "border-green-200",
+    "border-purple-200",
+    "border-pink-200",
+    "border-yellow-200",
+    "border-indigo-200",
+    "border-red-200",
+    "border-teal-200",
+    "border-orange-200",
+    "border-cyan-200",
+  ];
+  return colors[index % colors.length];
+}

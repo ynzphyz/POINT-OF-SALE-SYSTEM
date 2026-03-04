@@ -53,6 +53,9 @@ export interface Order {
   completedAt?: Date;
   paymentMethod?: PaymentMethod;
   notes?: string;
+  splitBill?: SplitBill;
+  mergedFromOrderIds?: string[]; // orders that were merged into this one
+  mergedAt?: Date;
 }
 
 export interface MenuItem {
@@ -145,6 +148,26 @@ export interface Payment {
   change?: number;
   reference?: string;
   timestamp: Date;
+}
+
+// Split Bill Types
+export type SplitBillMode = "amount" | "item";
+
+export interface SplitPerson {
+  id: string;
+  label: string; // "Orang 1", "Orang 2", or custom name
+  amount: number;
+  items?: OrderItem[]; // for split by item mode
+  paymentMethod?: PaymentMethod;
+  isPaid: boolean;
+  paidAt?: Date;
+}
+
+export interface SplitBill {
+  enabled: boolean;
+  mode: SplitBillMode;
+  splits: SplitPerson[];
+  createdAt: Date;
 }
 
 export interface Shift {
